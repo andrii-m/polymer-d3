@@ -1,10 +1,16 @@
-# \<polymer-app\>
+## Install bower and bower components
 
+Bower is a command line package manager. Install it with npm and then install the project dependencies 
 
+```
+$ npm install -g bower
+$ bower install
+```
 
 ## Install the Polymer-CLI
 
 First, make sure you have the [Polymer CLI](https://www.npmjs.com/package/polymer-cli) installed. Then run `polymer serve` to serve your application locally.
+
 
 ## Viewing Your Application
 
