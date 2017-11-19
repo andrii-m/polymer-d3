@@ -1,0 +1,121 @@
+<link rel="import" href="../../bower_components/polymer/polymer-element.html">
+<script src="../../bower_components/d3/d3.min.js"></script>
+
+<dom-module id="poly-line">
+    <template>
+
+        <style>
+            :host {
+                display: block;
+            }
+            .line {
+                fill: none;
+                stroke: steelblue;
+                stroke-width: 2px;
+            }
+        </style>
+        <svg id="svg"></svg>
+    </template>
+
+    <script>
+        /**
+         * @customElement
+         * @polymer
+         */
+        class PolyLine extends Polymer.Element {
+
+            static get is() {
+                return 'poly-line';
+            }
+
+            static get properties() {
+                return {
+                    data: {
+                        type: Array,
+                        observer: '_drawChart'
+                    }
+                };
+            }
+
+            _drawChart() {
+                const margin = {top: 20, right: 20, bottom: 80, left: 50},
+                    width = 960 - margin.left - margin.right,
+                    height = 500 - margin.top - margin.bottom;
+
+                this.data.forEach(function (d) {
+                    d.moment = new Date(d.moment);
+                    d.balance = +d.balance;
+                });
+
+                this.data.sort((a, b) => {
+                    return a.moment.getTime() - b.moment.getTime();
+                });
+
+                const x = d3.scaleTime()
+                    .domain(d3.extent(this.data, d => d.moment));
+                let xX = x.range([0, width]).nice();
+                const y = d3.scaleLinear()
+                    .domain([0, d3.max(this.data, d => d.balance)])
+                    .range([height, 0]);
+
+                const timeFormat = (date) => {
+                    const ticks = xX.ticks();
+                    const firstTick = d3.timeDay(ticks[0]);
+                    const lastTick = d3.timeDay(ticks[ticks.length - 1]);
+                    if (firstTick.getTime() === lastTick.getTime()) {
+                        return d3.timeFormat('%H:%M')(date);
+                    }
+                    return d3.timeFormat('%Y-%m-%d')(date);
+                };
+
+                const xAxis = d3.axisBottom(xX)
+                    .ticks((width + 2) / (height + 2) * 5)
+                    .tickFormat(timeFormat);
+                const yAxis = d3.axisLeft(y)
+                    .ticks(10);
+
+                const valueLine = d3.line()
+                    .x(d => x(d.moment))
+                    .y(d => y(d.balance));
+
+                const zoom = d3.zoom()
+                    .scaleExtent([1, 200])
+                    .translateExtent([[-100, -100], [width + 90, height + 100]])
+                    .on('zoom', zoomed);
+
+                const svg = d3.select(this.$.svg)
+                    .attr('width', width + margin.left + margin.right)
+                    .attr('height', height + margin.top + margin.bottom)
+                    .append('g')
+                    .attr('transform',
+                        'translate(' + margin.left + ',' + margin.top + ')');
+
+                const line = svg.append('path')
+                    .data([this.data])
+                    .attr('class', 'line')
+                    .attr('d', valueLine);
+
+                const gX = svg.append('g')
+                    .attr('transform', 'translate(0,' + height + ')')
+                    .call(xAxis);
+
+                svg.append('g')
+                    .call(yAxis);
+
+                svg.call(zoom);
+
+                function zoomed() {
+                    xX = d3.event.transform.rescaleX(x);
+
+                    gX.call(xAxis.scale(xX).ticks((width + 2) / (height + 2) * 5)
+                            .tickFormat(timeFormat));
+                    line.attr('d', d3.line()
+                        .x(d => xX(d.moment))
+                        .y(d => y(d.balance)));
+                }
+            }
+        }
+
+        window.customElements.define(PolyLine.is, PolyLine);
+    </script>
+</dom-module>

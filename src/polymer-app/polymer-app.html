@@ -1,0 +1,46 @@
+<link rel="import" href="../../bower_components/polymer/polymer-element.html">
+<link rel="import" href="../../bower_components/iron-ajax/iron-ajax.html">
+<link rel="import" href="../poly-line/poly-line.html">
+
+<dom-module id="polymer-app">
+    <template>
+        <style>
+            :host {
+                display: block;
+            }
+        </style>
+        <iron-ajax
+                auto
+                headers='{"X-Requested-With": "XMLHttpRequest"}'
+                url="/mockData/data.json"
+                params='{}'
+                handle-as="json"
+                on-response="handleResponse"
+                debounce-duration="300">
+        </iron-ajax>
+        <poly-line data="[[__chartData]]"></poly-line>
+    </template>
+
+    <script>
+        class PolymerApp extends Polymer.Element {
+
+            static get is() {
+                return 'polymer-app';
+            }
+
+            static get properties() {
+                return {
+                    __chartData: {
+                        type: Array
+                    }
+                };
+            }
+
+            handleResponse(request) {
+                this.__chartData = request.detail.response;
+            }
+        }
+
+        window.customElements.define(PolymerApp.is, PolymerApp);
+    </script>
+</dom-module>
